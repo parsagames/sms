@@ -19,7 +19,9 @@ import android.os.Looper;
 import android.telephony.SmsManager;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -143,6 +145,32 @@ public class MainActivity extends Activity {
         etNumbers.setHint("09121234567\n09351234567");
         etNumbers.setInputType(InputType.TYPE_CLASS_PHONE | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         etNumbers.setSingleLine(false);
+        // کلید → (Next/Done) کیبورد را به «رفتن به خط بعد» تبدیل می‌کنیم
+        etNumbers.setImeOptions(EditorInfo.IME_ACTION_NEXT | EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        etNumbers.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                boolean isEnterKey = event != null
+                        && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                        && event.getAction() == KeyEvent.ACTION_DOWN;
+                boolean isAction = actionId == EditorInfo.IME_ACTION_NEXT
+                        || actionId == EditorInfo.IME_ACTION_DONE
+                        || actionId == EditorInfo.IME_ACTION_GO
+                        || actionId == EditorInfo.IME_ACTION_SEND
+                        || actionId == EditorInfo.IME_ACTION_UNSPECIFIED;
+                if (isAction || isEnterKey) {
+                    try {
+                        EditText e = (EditText) v;
+                        int s = Math.max(e.getSelectionStart(), 0);
+                        int en = Math.max(e.getSelectionEnd(), 0);
+                        e.getText().replace(Math.min(s, en), Math.max(s, en), "\n");
+                    } catch (Throwable ignored) {
+                    }
+                    return true; // فوکوس در همین باکس می‌ماند
+                }
+                return false;
+            }
+        });
         etNumbers.setMinLines(7);
         etNumbers.setMaxLines(12);
         etNumbers.setGravity(Gravity.TOP | Gravity.START);
